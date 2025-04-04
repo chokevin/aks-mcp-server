@@ -648,6 +648,10 @@ def init_aks_tools(mcp: FastMCP):
             tags: Space-separated tags in 'key[=value]' format (optional)
         """
         try:
+            # Set environment variable to disable interactive prompts
+            env = os.environ.copy()
+            env["AZURE_CORE_NO_PROMPT"] = "true"
+
             cmd = [
                 "az",
                 "aks",
@@ -656,6 +660,7 @@ def init_aks_tools(mcp: FastMCP):
                 resource_group_name,
                 "--name",
                 cluster_name,
+                "--yes",  # Don't wait for operation to complete
             ]
 
             if kubernetes_version:
@@ -672,7 +677,9 @@ def init_aks_tools(mcp: FastMCP):
             if tags:
                 cmd.extend(["--tags", tags])
 
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, check=True, env=env
+            )
             return f"AKS cluster '{cluster_name}' update initiated."
 
         except subprocess.CalledProcessError as e:
@@ -868,6 +875,9 @@ def init_aks_tools(mcp: FastMCP):
         labels: str = None,
         tags: str = None,
         disable_cluster_autoscaler: bool = None,
+        enable_cluster_autoscaler: bool = None,
+        min_count: int = None,
+        max_count: int = None,
     ) -> str:
         """Update a node pool with new properties.
 
@@ -880,6 +890,9 @@ def init_aks_tools(mcp: FastMCP):
             labels: Comma-separated labels to apply to nodes (optional)
             tags: Space-separated tags in 'key[=value]' format for the node pool (optional)
             disable_cluster_autoscaler: Disable cluster autoscaler for this node pool (optional)
+            enable_cluster_autoscaler: Enable cluster autoscaler for this node pool (optional)
+            min_count: Minimum number of nodes for auto-scaling (required when enabling cluster autoscaler)
+            max_count: Maximum number of nodes for auto-scaling (required when enabling cluster autoscaler)
         """
         try:
             cmd = [
@@ -893,6 +906,7 @@ def init_aks_tools(mcp: FastMCP):
                 cluster_name,
                 "--name",
                 nodepool_name,
+                "--yes",
             ]
 
             if max_pods is not None:
@@ -908,9 +922,19 @@ def init_aks_tools(mcp: FastMCP):
 
             if tags:
                 cmd.extend(["--tags", tags])
-                
+
             if disable_cluster_autoscaler:
                 cmd.extend(["--disable-cluster-autoscaler"])
+
+            if enable_cluster_autoscaler:
+                cmd.extend(["--enable-cluster-autoscaler"])
+
+                if min_count is None or max_count is None:
+                    return "Error: min_count and max_count are required when enabling cluster autoscaler"
+
+                cmd.extend(
+                    ["--min-count", str(min_count), "--max-count", str(max_count)]
+                )
 
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
             return f"Node pool '{nodepool_name}' updated successfully."

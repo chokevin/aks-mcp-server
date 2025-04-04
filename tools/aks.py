@@ -720,37 +720,6 @@ def init_aks_tools(mcp: FastMCP):
             return f"Unexpected error: {str(e)}"
 
     @mcp.tool()
-    async def aks_browse(resource_group_name: str, cluster_name: str) -> str:
-        """Launch the Kubernetes dashboard for a cluster.
-        Note: This requires the Kubernetes dashboard to be enabled.
-
-        Args:
-            resource_group_name: Name of the resource group
-            cluster_name: Name of the AKS cluster
-        """
-        try:
-            # This function can't actually launch a browser in headless mode,
-            # but we can check if Kubernetes dashboard is accessible
-            cmd = [
-                "az",
-                "aks",
-                "browse",
-                "--resource-group",
-                resource_group_name,
-                "--name",
-                cluster_name,
-                "--disable-browser",
-            ]
-
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-            return "Successfully connected to Kubernetes dashboard. In an interactive session, this would open the dashboard in your browser."
-
-        except subprocess.CalledProcessError as e:
-            return f"Error accessing Kubernetes dashboard: {e.stderr}"
-        except Exception as e:
-            return f"Unexpected error: {str(e)}"
-
-    @mcp.tool()
     async def aks_command_invoke(
         resource_group_name: str, cluster_name: str, command: str
     ) -> str:
@@ -776,12 +745,7 @@ def init_aks_tools(mcp: FastMCP):
             ]
 
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-            result_data = json.loads(result.stdout)
-
-            # Format the output from the command result
-            return result_data.get(
-                "logs", "Command executed, but no logs were returned."
-            )
+            return result.stdout
 
         except subprocess.CalledProcessError as e:
             return f"Error executing cluster command: {e.stderr}"

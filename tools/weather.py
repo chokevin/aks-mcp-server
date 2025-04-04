@@ -1,8 +1,7 @@
 import httpx
 from mcp.server.fastmcp import FastMCP
 from typing import Any
-import subprocess
-import json
+
 
 
 # Constants
@@ -37,52 +36,6 @@ Instructions: {props.get('instruction', 'No specific instructions provided')}
 # Initialize Weather Tools
 def init_weather_tools(mcp: FastMCP):
     """Initialize tools for the FastMCP server."""
-
-    @mcp.tool()
-    async def get_aks_clusters(state: str) -> str:
-        """Get Azure AKS clusters using the Azure CLI.
-
-        Args:
-            state: Filter parameter (can be resource group or any filter criteria)
-        """
-        try:
-            # Run the az aks list command
-            cmd = ["az", "aks", "list"]
-
-            # Add resource group filter if state is provided and looks like a resource group name
-            if state and state.strip():
-                cmd.extend(["--resource-group", state])
-
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-
-            # Parse the JSON output
-            clusters = json.loads(result.stdout)
-
-            if not clusters:
-                return "No AKS clusters found."
-
-            # Format the results nicely
-            formatted_output = []
-            for cluster in clusters:
-                formatted_output.append(f"Name: {cluster.get('name')}")
-                formatted_output.append(
-                    f"Resource Group: {cluster.get('resourceGroup')}"
-                )
-                formatted_output.append(f"Location: {cluster.get('location')}")
-                formatted_output.append(
-                    f"Kubernetes Version: {cluster.get('kubernetesVersion')}"
-                )
-                formatted_output.append(f"Status: {cluster.get('provisioningState')}")
-                formatted_output.append("---")
-
-            return "\n".join(formatted_output)
-        except subprocess.CalledProcessError as e:
-            # Handle errors like when az CLI isn't installed or authentication failures
-            return f"Error executing Azure CLI command: {e.stderr}"
-        except json.JSONDecodeError:
-            return "Error parsing Azure CLI output"
-        except Exception as e:
-            return f"Unexpected error: {str(e)}"
 
     @mcp.tool()
     async def get_alerts(state: str) -> str:

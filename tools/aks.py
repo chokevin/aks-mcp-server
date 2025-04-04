@@ -867,6 +867,7 @@ def init_aks_tools(mcp: FastMCP):
         enable_node_public_ip: bool = None,
         labels: str = None,
         tags: str = None,
+        disable_cluster_autoscaler: bool = None,
     ) -> str:
         """Update a node pool with new properties.
 
@@ -878,6 +879,7 @@ def init_aks_tools(mcp: FastMCP):
             enable_node_public_ip: Enable/disable nodes having public IPs (optional)
             labels: Comma-separated labels to apply to nodes (optional)
             tags: Space-separated tags in 'key[=value]' format for the node pool (optional)
+            disable_cluster_autoscaler: Disable cluster autoscaler for this node pool (optional)
         """
         try:
             cmd = [
@@ -906,6 +908,9 @@ def init_aks_tools(mcp: FastMCP):
 
             if tags:
                 cmd.extend(["--tags", tags])
+                
+            if disable_cluster_autoscaler:
+                cmd.extend(["--disable-cluster-autoscaler"])
 
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
             return f"Node pool '{nodepool_name}' updated successfully."

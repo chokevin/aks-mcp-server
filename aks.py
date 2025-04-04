@@ -1,15 +1,15 @@
 from typing import Any
-import httpx
-from mcp.server.fastmcp import FastMCP
-import uvicorn
-import tools
 import sys
+from mcp.server.fastmcp import FastMCP
+
+import tools.toolcase as toolcase
 
 
 # Initialize FastMCP server
 mcp = FastMCP("aks-mcp")
 
-tools.init_tools(mcp)
+# Initialize tools directly
+toolcase.init_tools(mcp)
 
 if __name__ == "__main__":
     # Initialize and run the server
